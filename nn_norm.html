@@ -1,0 +1,289 @@
+<!doctype html>
+<html lang="en">
+
+  <head>
+    <meta charset="utf-8">
+
+    <title>Normalization in Neural Networks</title>
+
+    <meta name="description" content="Introducing various normalization techniques for training better NNs">
+    <meta name="author" content="Tong Xiao">
+
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+    <link rel="stylesheet" href="css/reveal.css">
+    <link rel="stylesheet" href="css/theme/black.css" id="theme">
+
+    <!-- Theme used for syntax highlighting of code -->
+    <link rel="stylesheet" href="lib/css/zenburn.css">
+
+    <!-- Some ad-hoc styles -->
+    <style>
+      .reveal li { margin-top: 20px; margin-bottom: 20px; }
+    </style>
+
+    <!-- Printing and PDF exports -->
+    <script>
+      var link = document.createElement( 'link' );
+      link.rel = 'stylesheet';
+      link.type = 'text/css';
+      link.href = window.location.search.match( /print-pdf/gi ) ? 'css/print/pdf.css' : 'css/print/paper.css';
+      document.getElementsByTagName( 'head' )[0].appendChild( link );
+    </script>
+
+    <!--[if lt IE 9]>
+    <script src="lib/js/html5shiv.js"></script>
+    <![endif]-->
+  </head>
+
+  <body>
+
+    <div class="reveal">
+
+      <!-- Any section element inside of this container is displayed as a slide -->
+      <div class="slides">
+
+        <section>
+          <h1>Normalization in Neural Networks</h1>
+          <p>
+            <small>Guangrun Wang, Shuai Li, Tong Xiao</small>
+          </p>
+        </section>
+
+        <section>
+          <section>
+            <h2>Why Need Normalization?</h2>
+            <p>Many layers with non-linear functions are stacked.</p>
+            <img data-src="images/googlenet_diagram.png" alt="GoogLeNet">
+          </section>
+          <section>
+            <h2><em>Without</em> normalization</h2>
+            <div style="width: 1500px; height: 400px; overflow: hidden">
+              <!-- <iframe src="http://geargenerator.com/#200,200,100,3,1,9,4470.200000001305,10,1,64,1.6,40,20,-60,0,0,54,1.35,40,20,0,1,0,48,1.2,40,20,0,2,0,42,1.05,40,20,0,3,0,36,0.9,40,20,0,4,0,30,0.75,40,20,0,5,0,24,0.6,40,20,0,6,0,18,0.45,40,20,0,7,0,12,0.3,40,20,0,8,0,6,0.15,40,20,0,0,0,2,381" frameborder="0" style="position: relative; left: -500px; top: -20px; width: 200%; height: 100%;" scroll="auto"></iframe> -->
+            </div>
+          </section>
+          <section>
+            <h2><em>With</em> normalization</h2>
+            <div style="width: 1500px; height: 240px; overflow: hidden">
+              <!-- <iframe src="http://geargenerator.com/#110,110,110,16,1,9,19184.500000002336,10,1,32,0.8,40,20,-60,0,0,32,0.8,40,20,0,1,0,32,0.8,40,20,0,2,0,32,0.8,40,20,0,3,0,32,0.8,40,20,0,4,0,32,0.8,40,20,0,5,0,32,0.8,40,20,0,6,0,32,0.8,40,20,0,7,0,32,0.8,40,20,0,8,0,32,0.8,40,20,0,0,0,2,66" frameborder="0" style="position: relative; left: -450px; top: 0px; width: 200%; height: 100%;" scroll="auto"></iframe> -->
+            </div>
+          </section>
+        </section>
+
+        <section data-markdown>
+          <script type="text/template">
+            ## What to be Normalized?
+
+            - Feature Representation
+              - CNNs- Batch Normalization (BN) <!-- .element: class="fragment" -->
+              - RNNs- Layer Normalization (LN) <!-- .element: class="fragment" -->
+
+            - Parameters
+              - Weight Normalization (WN) <!-- .element: class="fragment" -->
+              - Normalization Propagation (NormProp) <!-- .element: class="fragment" -->
+          </script>
+        </section>
+
+        <section>
+          <h2>Batch Normalization</h2>
+          <h3>Motivation</h3>
+          <p>Suppose you want to learn \(p(y | x)\), if \(p(x)\) changes from batch to batch, then it would be very hard to learn.</p>
+          <p class="fragment"><a>Internal Covariate Shift</a></p>
+        </section>
+
+        <section>
+          <h2>Batch Normalization</h2>
+          <h3>Solution</h3>
+          <ol>
+            <li class="fragment">\(\mu_B \gets \frac{1}{m} \sum_{i=1}^m x_i\)</li>
+            <li class="fragment">\(\sigma_B^2 \gets \frac{1}{m} \sum_{i=1}^m (x_i-\mu_B)^2\)</li>
+            <li class="fragment">\(\hat{x}_i \gets \frac{x_i-\mu_B}{\sqrt{\sigma_B^2+\epsilon}}\)</li>
+            <li class="fragment">\(y_i \gets \gamma \hat{x}_i + \beta\)</li>
+          </ol>
+          <p class="fragment"><a>\(\mu_B\) and \(\sigma_B\) are not constant! They involve in BP.</a></p>
+        </section>
+
+        <section>
+          <h2>Batch Normalization</h2>
+          <h3>Limitation</h3>
+          <ul>
+            <li class="fragment">Batch statistics deviate from global ones when batch size is small. (Recall the central limit theorem)</li>
+            <li class="fragment">Cannot be applied in RNNs, <em>e.g.</em>, training has at most 10 words in a sentence, while test has more than 10 words.</li>
+          </ul>
+        </section>
+
+        <section data-markdown>
+          <script type="text/template">
+            ## Normalization Propagation
+
+            - Normalize the network input data, then keep such normalization unchanged after each layer. <!-- .element: class="fragment" -->
+
+            - Provides a theoretical bound of how far the layer output will deviate from unit variance, if weights are normalized. <!-- .element: class="fragment" -->
+          </script>
+        </section>
+
+        <section>
+          <h2>Normalize Input Data</h2>
+          <pre><code class="hljs" data-trim contenteditable>
+import numpy as np
+
+def normalize(X):  # X is a NxCxHxW tensor with N samples
+  mu = X.mean(axis=0)
+  sigma = X.std(axis=0)
+  X = (X - mu) / sigma
+  return X
+          </code></pre>
+        </section>
+
+        <section>
+          <section>
+            <h2>Normalize Conv/FC output</h2>
+            <ul>
+              <li class="fragment">Input \(x \in \mathbb{R}^n\) with zero mean and unit covariance.</li>
+              <li class="fragment">Weight \(\mathbf{W} \in \mathbb{R}^{m\times n}\).</li>
+              <li class="fragment">Output \(u = \mathbf{W}x\) with covariance matrix \(\mathbf{\Sigma}\) satisfying<br><br>
+                  \[\min_\alpha\|\mathbf{\Sigma} - \text{diag}(\alpha)\|_F \le \mu \sqrt{\sum_{i,j=1; i\ne j}^m \|\mathbf{W}_i\|_2^2\|\mathbf{W}_j\|_2^2 }\]<br>
+                  where \(\mu\) is the coherence of \(\mathbf{W}\), and the optimal \(\alpha_i^* = \|\mathbf{W}_i\|_2^2\).
+              </li>
+            </ul>
+          </section>
+          <section>
+            <small>
+              \[\min_\alpha\|\mathbf{\Sigma} - \text{diag}(\alpha)\|_F \le \mu \sqrt{\sum_{i,j=1; i\ne j}^m \|\mathbf{W}_i\|_2^2\|\mathbf{W}_j\|_2^2 }\]<br>
+                    where \(\mu = \max_{i\ne j} \frac{|<\mathbf{W}_i, \mathbf{W}_j>|}{\|\mathbf{W}_i\|_2\|\mathbf{W}_j\|_2}\) , and the optimal \(\alpha_i^* = \|\mathbf{W}_i\|_2^2\).
+            </small>
+            <hr>
+            <p>To achieve approximately unit covariance, we keep</p>
+            <ul>
+              <li class="fragment">\(\|\mathbf{W}_i\|_2=1\) <a>that's why weight normalization works</a></li>
+              <li class="fragment">\(\mu\) small, <em>i.e.</em>, the rows of \(\mathbf{W}\) as orthogonal as possible</li>
+            </ul>
+          </section>
+        </section>
+
+        <section>
+          <h2>Normalize ReLU Output</h2>
+          <ul>
+            <li class="fragment">Input \(x \sim \mathcal{N}(0, 1)\) <em>-- observed from data.</em></li>
+            <li class="fragment">Output \(y = \max(0, x)\) with mean \(\frac{1}{\sqrt{2\pi}}\) and variance \(\frac{1}{2}\left(1-\frac{1}{\pi}\right)\).
+            </li>
+          </ul>
+          <p class="fragment">\[y\gets \frac{y-\frac{1}{\sqrt{2\pi}}}{\sqrt{\frac{1}{2}\left(1-\frac{1}{\pi}\right)}}\]</p>
+        </section>
+
+        <section>
+          <h2>Overall Formulation</h2>
+          <p>\[y_i=\frac{1}{\sqrt{\frac{1}{2}\left(1-\frac{1}{\pi}\right)}}\left[\text{ReLU}\left( \frac{\gamma_i\mathbf{W}_i^Tx}{\|\mathbf{W}_i\|_2} + \beta_i \right) - \frac{1}{\sqrt{2\pi}}\right]\]</p>
+        </section>
+
+        <section>
+          <h2>How about the gradients?</h2>
+          <ul>
+            <li>The Jacobian matrix satisfies \(\mathrm{E}[\mathbf{J}\mathbf{J}^T] \approx 1.47\mathbf{I}\).</li>
+            <li>The singular values of \(\mathbf{J}\) are \(\sqrt{1.47} = 1.21\), close to \(1\).</li>
+          </ul>
+        </section>
+
+        <section>
+          <section data-markdown>
+            <script type="text/template">
+              ## Experiments
+              ![normprop vs bn](images/normprop_vs_bn.png "The evolution of hidden layer input distribution mean")
+              <p>The evolution of hidden layer input distribution mean.</p>
+            </script>
+          </section>
+          <section data-markdown>
+            <script type="text/template">
+              ![normprop batchsize](images/normprop_batchsize.png "Different batch sizes")
+              <p>Robust under different batch sizes.</p>
+            </script>
+          </section>
+          <section data-markdown>
+            <script type="text/template">
+              ![normprop cifar](images/normprop_cifar.png "Results on CIFAR")
+              <p>Results on CIFAR-10 and CIFAR-100.</p>
+            </script>
+          </section>
+        </section>
+
+        <section>
+          <h2>Conclusion</h2>
+          <p>Feature shape \(N\times C\times H\times W\)</p>
+          <ul>
+            <li class="fragment">BN- normalize along \(N\)</li>
+            <li class="fragment">LN- normalize along \(C\times H\times W\)</li>
+            <li class="fragment">Channel normalization? Along \(C\) only?</li>
+          </ul>
+        </section>
+
+        <section>
+          <h2>Is Softmax a Normalization?</h2>
+          <ul>
+            <li class="fragment">Suppose the input is i.i.d. \(n\)-d gaussian variable</li>
+            <li class="fragment">The output mean is \(\left(\frac{1}{n}, \frac{1}{n}, \dots, \frac{1}{n}\right)\)</li>
+            <li class="fragment">The output covariance seems to be \(\exp(\alpha n)\) on diagonal and \(\log(\beta n)\) on off-diagonal elements.<br>Consider scaling the output?<br><img src="images/softmax_cov.svg" height="250" style="position: relative; left: 55%; top: -50px;"></li>
+          </ul>
+        </section>
+
+        <section>
+          <h2>How about ResNet?</h2>
+          <ul>
+          </ul>
+        </section>
+
+        <section data-markdown>
+          <script type="text/template">
+            ## References
+            <small>
+            1. S. Ioffe, and C. Szegedy, [*Batch Normalization: Accelerating Deep Network Training by Reducing Internal Covariate Shift*](https://arxiv.org/abs/1502.03167), ICML, 2015
+            2. J. Ba, J. Kiros, and G. Hinton, [*Layer Normalization*](https://arxiv.org/abs/1607.06450), arXiv, 2016
+            3. T. Cooijmans, *et. al.*, [*Recurrent Batch Normalization*](https://arxiv.org/abs/1603.09025), arXiv, 2016
+            4. T. Salimans, and D. Kingma, [*Weight Normalization: A Simple Reparameterization to Accelerate Training of Deep Neural Networks*](https://arxiv.org/abs/1602.07868), arXiv, 2016
+            5. D. Arpit, *et. al.*, [*Normalization Propagation: A Parametric Technique for Removing Internal Covariate Shift in Deep Networks*](http://arxiv.org/abs/1603.01431), ICML, 2016
+
+            </small>
+          </script>
+        </section>
+
+      </div>
+
+    </div>
+
+    <script src="lib/js/head.min.js"></script>
+    <script src="js/reveal.js"></script>
+
+    <script>
+
+      // More info https://github.com/hakimel/reveal.js#configuration
+      Reveal.initialize({
+        controls: true,
+        progress: true,
+        history: true,
+        center: true,
+
+        transition: 'slide', // none/fade/slide/convex/concave/zoom
+
+        math: {
+          mathjax: 'https://cdn.mathjax.org/mathjax/latest/MathJax.js',
+          config: 'TeX-AMS_HTML-full'  // See http://docs.mathjax.org/en/latest/config-files.html
+        },
+
+        // More info https://github.com/hakimel/reveal.js#dependencies
+        dependencies: [
+          { src: 'lib/js/classList.js', condition: function() { return !document.body.classList; } },
+          { src: 'plugin/markdown/marked.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+          { src: 'plugin/markdown/markdown.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+          { src: 'plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } },
+          { src: 'plugin/zoom-js/zoom.js', async: true },
+          { src: 'plugin/notes/notes.js', async: true },
+          { src: 'plugin/math/math.js', async: true },
+        ]
+      });
+
+    </script>
+
+  </body>
+</html>
