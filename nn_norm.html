@@ -62,13 +62,13 @@
           <section>
             <h2><em>Without</em> normalization</h2>
             <div style="width: 1500px; height: 400px; overflow: hidden">
-              <!-- <iframe src="http://geargenerator.com/#200,200,100,3,1,9,4470.200000001305,10,1,64,1.6,40,20,-60,0,0,54,1.35,40,20,0,1,0,48,1.2,40,20,0,2,0,42,1.05,40,20,0,3,0,36,0.9,40,20,0,4,0,30,0.75,40,20,0,5,0,24,0.6,40,20,0,6,0,18,0.45,40,20,0,7,0,12,0.3,40,20,0,8,0,6,0.15,40,20,0,0,0,2,381" frameborder="0" style="position: relative; left: -500px; top: -20px; width: 200%; height: 100%;" scroll="auto"></iframe> -->
+              <iframe src="http://geargenerator.com/#200,200,100,3,1,9,4470.200000001305,10,1,64,1.6,40,20,-60,0,0,54,1.35,40,20,0,1,0,48,1.2,40,20,0,2,0,42,1.05,40,20,0,3,0,36,0.9,40,20,0,4,0,30,0.75,40,20,0,5,0,24,0.6,40,20,0,6,0,18,0.45,40,20,0,7,0,12,0.3,40,20,0,8,0,6,0.15,40,20,0,0,0,2,381" frameborder="0" style="position: relative; left: -500px; top: -20px; width: 200%; height: 100%;" scroll="auto"></iframe>
             </div>
           </section>
           <section>
             <h2><em>With</em> normalization</h2>
             <div style="width: 1500px; height: 240px; overflow: hidden">
-              <!-- <iframe src="http://geargenerator.com/#110,110,110,16,1,9,19184.500000002336,10,1,32,0.8,40,20,-60,0,0,32,0.8,40,20,0,1,0,32,0.8,40,20,0,2,0,32,0.8,40,20,0,3,0,32,0.8,40,20,0,4,0,32,0.8,40,20,0,5,0,32,0.8,40,20,0,6,0,32,0.8,40,20,0,7,0,32,0.8,40,20,0,8,0,32,0.8,40,20,0,0,0,2,66" frameborder="0" style="position: relative; left: -450px; top: 0px; width: 200%; height: 100%;" scroll="auto"></iframe> -->
+              <iframe src="http://geargenerator.com/#110,110,110,16,1,9,19184.500000002336,10,1,32,0.8,40,20,-60,0,0,32,0.8,40,20,0,1,0,32,0.8,40,20,0,2,0,32,0.8,40,20,0,3,0,32,0.8,40,20,0,4,0,32,0.8,40,20,0,5,0,32,0.8,40,20,0,6,0,32,0.8,40,20,0,7,0,32,0.8,40,20,0,8,0,32,0.8,40,20,0,0,0,2,66" frameborder="0" style="position: relative; left: -450px; top: 0px; width: 200%; height: 100%;" scroll="auto"></iframe>
             </div>
           </section>
         </section>
@@ -103,14 +103,14 @@
             <li class="fragment">\(\hat{x}_i \gets \frac{x_i-\mu_B}{\sqrt{\sigma_B^2+\epsilon}}\)</li>
             <li class="fragment">\(y_i \gets \gamma \hat{x}_i + \beta\)</li>
           </ol>
-          <p class="fragment"><a>\(\mu_B\) and \(\sigma_B\) are not constant! They involve in BP.</a></p>
+          <p class="fragment"><a>\(\mu_B\) and \(\sigma_B\) are not constant! They are involved in BP.</a></p>
         </section>
 
         <section>
           <h2>Batch Normalization</h2>
           <h3>Limitation</h3>
           <ul>
-            <li class="fragment">Batch statistics deviate from global ones when batch size is small. (Recall the central limit theorem)</li>
+            <li class="fragment">Batch statistics deviates from the global one when batch size is small. (Recall the central limit theorem)</li>
             <li class="fragment">Cannot be applied in RNNs, <em>e.g.</em>, training has at most 10 words in a sentence, while test has more than 10 words.</li>
           </ul>
         </section>
@@ -136,6 +136,10 @@ def normalize(X):  # X is a NxCxHxW tensor with N samples
   X = (X - mu) / sigma
   return X
           </code></pre>
+          <small>
+            <p><em>Note that this only normalizes the variance but not the covariance.</em></p>
+            <p><em>However, we assume it achieves unit covariance approximately.</em></p>
+          </small>
         </section>
 
         <section>
@@ -145,15 +149,15 @@ def normalize(X):  # X is a NxCxHxW tensor with N samples
               <li class="fragment">Input \(x \in \mathbb{R}^n\) with zero mean and unit covariance.</li>
               <li class="fragment">Weight \(\mathbf{W} \in \mathbb{R}^{m\times n}\).</li>
               <li class="fragment">Output \(u = \mathbf{W}x\) with covariance matrix \(\mathbf{\Sigma}\) satisfying<br><br>
-                  \[\min_\alpha\|\mathbf{\Sigma} - \text{diag}(\alpha)\|_F \le \mu \sqrt{\sum_{i,j=1; i\ne j}^m \|\mathbf{W}_i\|_2^2\|\mathbf{W}_j\|_2^2 }\]<br>
-                  where \(\mu\) is the coherence of \(\mathbf{W}\), and the optimal \(\alpha_i^* = \|\mathbf{W}_i\|_2^2\).
+                  \[\|\mathbf{\Sigma} - \text{diag}(\alpha)\|_F \le \mu \sqrt{\sum_{i,j=1; i\ne j}^m \|\mathbf{W}_i\|_2^2\|\mathbf{W}_j\|_2^2 }\]<br>
+                  where \(\mu\) is the coherence of \(\mathbf{W}\), and \(\alpha_i = \|\mathbf{W}_i\|_2^2\).
               </li>
             </ul>
           </section>
           <section>
             <small>
-              \[\min_\alpha\|\mathbf{\Sigma} - \text{diag}(\alpha)\|_F \le \mu \sqrt{\sum_{i,j=1; i\ne j}^m \|\mathbf{W}_i\|_2^2\|\mathbf{W}_j\|_2^2 }\]<br>
-                    where \(\mu = \max_{i\ne j} \frac{|<\mathbf{W}_i, \mathbf{W}_j>|}{\|\mathbf{W}_i\|_2\|\mathbf{W}_j\|_2}\) , and the optimal \(\alpha_i^* = \|\mathbf{W}_i\|_2^2\).
+              \[\|\mathbf{\Sigma} - \text{diag}(\alpha)\|_F \le \mu \sqrt{\sum_{i,j=1; i\ne j}^m \|\mathbf{W}_i\|_2^2\|\mathbf{W}_j\|_2^2 }\]<br>
+                    where \(\mu = \max_{i\ne j} \frac{|<\mathbf{W}_i, \mathbf{W}_j>|}{\|\mathbf{W}_i\|_2\|\mathbf{W}_j\|_2}\) , and the optimal \(\alpha_i = \|\mathbf{W}_i\|_2^2\).
             </small>
             <hr>
             <p>To achieve approximately unit covariance, we keep</p>
@@ -167,7 +171,7 @@ def normalize(X):  # X is a NxCxHxW tensor with N samples
         <section>
           <h2>Normalize ReLU Output</h2>
           <ul>
-            <li class="fragment">Input \(x \sim \mathcal{N}(0, 1)\) <em>-- observed from data.</em></li>
+            <li class="fragment">Input \(x \sim \mathcal{N}(0, 1)\) <em>-- observed from experiments.</em></li>
             <li class="fragment">Output \(y = \max(0, x)\) with mean \(\frac{1}{\sqrt{2\pi}}\) and variance \(\frac{1}{2}\left(1-\frac{1}{\pi}\right)\).
             </li>
           </ul>
@@ -182,8 +186,9 @@ def normalize(X):  # X is a NxCxHxW tensor with N samples
         <section>
           <h2>How about the gradients?</h2>
           <ul>
-            <li>The Jacobian matrix satisfies \(\mathrm{E}[\mathbf{J}\mathbf{J}^T] \approx 1.47\mathbf{I}\).</li>
-            <li>The singular values of \(\mathbf{J}\) are \(\sqrt{1.47} = 1.21\), close to \(1\).</li>
+            <li class="fragment">The Jacobian matrix \(\mathbf{J}\) where \(\mathbf{J}_{ij} = \frac{\partial y_i}{\partial x_j}\)</li>
+            <li class="fragment">We can derive that \(\mathrm{E}_x[\mathbf{J}\mathbf{J}^T] \approx 1.47 \mathbf{I}\)</li>
+            <li class="fragment">The singular values of \(\mathbf{J}\) are \(\sqrt{1.47} = 1.21\), close to \(1\).</li>
           </ul>
         </section>
 
@@ -230,8 +235,14 @@ def normalize(X):  # X is a NxCxHxW tensor with N samples
 
         <section>
           <h2>How about ResNet?</h2>
-          <ul>
-          </ul>
+          <div style="float: left;">
+            <img src="images/resnet_module.png" alt="ResNet module">
+            <img src="images/insert_bn.png" alt="Insert BN" class="fragment" style="position: relative; left: -20px; top: -300px; border: none;">
+            <img src="images/insert_bn.png" alt="Insert BN" class="fragment" style="position: relative; left: -158px; top: -137px; border: none;">
+          </div>
+          <p style="float: left; width: 60%; text-align: left; margin-left: -150px; margin-top: 220px;" class="fragment">
+            Add BN after every layer that may change the mean / covariance?
+          </p>
         </section>
 
         <section data-markdown>
